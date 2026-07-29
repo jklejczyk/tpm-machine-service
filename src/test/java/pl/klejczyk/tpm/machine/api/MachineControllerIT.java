@@ -1,0 +1,44 @@
+package pl.klejczyk.tpm.machine.api;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import pl.klejczyk.tpm.machine.TestcontainersConfiguration;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import(TestcontainersConfiguration.class)
+class MachineControllerIT {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void registersMachineAndReturnsItRunning() throws Exception {
+        mockMvc.perform(post("/machines").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Hydraulic press\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Hydraulic press"))
+                .andExpect(jsonPath("$.status").value("RUNNING"));
+    }
+
+    @Test
+    void rejectsRegistrationWithoutName() throws Exception {
+        mockMvc.perform(post("/machines").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void returnsNotFoundForUnknownMachine() throws Exception {
+        mockMvc.perform(get("/machines/no-such-machine"))
+                .andExpect(status().isNotFound());
+    }
+}
