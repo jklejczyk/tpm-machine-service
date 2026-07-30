@@ -10,6 +10,13 @@ services:
       test: ["CMD-SHELL", "pg_isready -U machine_user -d machine_db"]
       interval: 5s
       retries: 10
+  rabbit:
+    image: rabbitmq:4-management-alpine
+    ports: [ "5673:5672", "15673:15672" ]
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 5s
+      retries: 10
 
   app:
     build: .
@@ -17,7 +24,11 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/machine_db
       SPRING_DATASOURCE_USERNAME: machine_user
       SPRING_DATASOURCE_PASSWORD: machine
+      SPRING_RABBITMQ_HOST: rabbit
+      SPRING_RABBITMQ_PORT: 5672
     ports: ["8081:8080"]
     depends_on:
       db:
+        condition: service_healthy
+      rabbit:
         condition: service_healthy
