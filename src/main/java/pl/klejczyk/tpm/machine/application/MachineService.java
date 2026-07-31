@@ -30,8 +30,7 @@ public class MachineService {
         events.publishEvent(new DomainEventOccurred(
                 "machine.registered",
                 "MachineRegistered",
-                new MachineRegistered(saved.id(), saved.name()),
-                null
+                new MachineRegistered(saved.id(), saved.name())
         ));
 
         return saved;

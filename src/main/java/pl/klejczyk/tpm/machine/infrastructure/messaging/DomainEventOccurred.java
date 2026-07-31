@@ -4,6 +4,5 @@ package pl.klejczyk.tpm.machine.infrastructure.messaging;
 public record DomainEventOccurred(
         String routingKey,
         String type,
-        Object payload,
-        String correlationId) {
+        Object payload) {
 }

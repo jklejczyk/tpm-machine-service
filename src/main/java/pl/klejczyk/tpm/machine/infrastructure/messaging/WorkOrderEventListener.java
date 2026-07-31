@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import pl.klejczyk.tpm.machine.domain.Machine;
 import pl.klejczyk.tpm.machine.domain.MachineRepository;
+import pl.klejczyk.tpm.machine.support.CorrelationId;
 
 import java.time.Clock;
 import java.util.Optional;
@@ -32,8 +33,17 @@ class WorkOrderEventListener {
     @RabbitListener(queues = RabbitConfiguration.WORKORDER_QUEUE)
     @Transactional
     void onWorkOrderEvent(EventEnvelope<WorkOrderMachineEvent> envelope) {
+        CorrelationId.set(envelope.correlationId());
+        try {
+            handle(envelope);
+        } finally {
+            CorrelationId.clear();
+        }
+    }
+
+    private void handle(EventEnvelope<WorkOrderMachineEvent> envelope) {
         if (processedEvents.existsById(envelope.eventId())) {
-            log.info("Skipping duplicate eventId={} correlationId={}", envelope.eventId(), envelope.correlationId());
+            log.info("Skipping duplicate eventId={}", envelope.eventId());
             return;
         }
 
@@ -41,13 +51,13 @@ class WorkOrderEventListener {
         Optional<Machine> found = machines.findById(machineId);
 
         if (found.isEmpty()) {
-            log.warn("Event {} refers to unknown machine {} correlationId={}", envelope.type(), machineId, envelope.correlationId());
+            log.warn("Event {} refers to unknown machine {}", envelope.type(), machineId);
         } else if (STARTED.equals(envelope.type())) {
             found.get().sendToMaintenance();
-            log.info("Machine {} is now under maintenance, correlationId={}", machineId, envelope.correlationId());
+            log.info("Machine {} is now under maintenance", machineId);
         } else if (RESOLVED.equals(envelope.type())) {
             found.get().returnToService();
-            log.info("Machine {} is back in service, correlationId={}", machineId, envelope.correlationId());
+            log.info("Machine {} is back in service", machineId);
         }
 
         processedEvents.save(new ProcessedEvent(envelope.eventId(), clock.instant()));
