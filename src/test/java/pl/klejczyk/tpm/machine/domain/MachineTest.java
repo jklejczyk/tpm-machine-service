@@ -7,22 +7,36 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MachineTest {
 
+    private static final Actor MANAGER = new Actor("mgr-1", Role.MANAGER);
+    private static final Actor OPERATOR = new Actor("op-1", Role.OPERATOR);
+
+    private Machine registered() {
+        return Machine.register(MANAGER, "m-1", "Hydraulic press");
+    }
+
     @Test
     void isRunningAfterRegistration() {
-        Machine machine = Machine.register("m-1", "Hydraulic press");
+        Machine machine = registered();
 
         assertThat(machine.status()).isEqualTo(MachineStatus.RUNNING);
         assertThat(machine.name()).isEqualTo("Hydraulic press");
     }
 
     @Test
+    void onlyAManagerMayRegisterAMachine() {
+        assertThatThrownBy(() -> Machine.register(OPERATOR, "m-1", "Hydraulic press"))
+                .isInstanceOf(UnauthorizedOperation.class);
+    }
+
+    @Test
     void rejectsBlankName() {
-        assertThatThrownBy(() -> Machine.register("m-1", "   ")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Machine.register(MANAGER, "m-1", "   "))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void goesUnderMaintenanceWhenSentToService() {
-        Machine machine = Machine.register("m-1", "Hydraulic press");
+        Machine machine = registered();
 
         machine.sendToMaintenance();
 
@@ -31,7 +45,7 @@ class MachineTest {
 
     @Test
     void returnsToRunningAfterService() {
-        Machine machine = Machine.register("m-1", "Hydraulic press");
+        Machine machine = registered();
         machine.sendToMaintenance();
 
         machine.returnToService();
@@ -41,7 +55,7 @@ class MachineTest {
 
     @Test
     void toleratesRepeatedMaintenanceRequest() {
-        Machine machine = Machine.register("m-1", "Hydraulic press");
+        Machine machine = registered();
 
         machine.sendToMaintenance();
         machine.sendToMaintenance();

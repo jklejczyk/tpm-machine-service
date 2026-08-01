@@ -28,7 +28,10 @@ public class Machine {
         this.status = status;
     }
 
-    public static Machine register(String id, String name) {
+    public static Machine register(Actor actor, String id, String name) {
+        if (!actor.hasRole(Role.MANAGER)) {
+            throw UnauthorizedOperation.forActor(actor, "register");
+        }
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Machine name must not be blank.");
         }

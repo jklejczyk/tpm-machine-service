@@ -21,7 +21,7 @@ Both require a `Bearer` token signed by the auth service.
 
 | Method | Path | |
 |---|---|---|
-| `POST` | `/machines` | register a machine, returns `201` |
+| `POST` | `/machines` | register a machine, **manager only**, returns `201` |
 | `GET` | `/machines/{id}` | read one |
 | `GET` | `/actuator/health` | open, no token required |
 
@@ -30,9 +30,12 @@ Both require a `Bearer` token signed by the auth service.
 With the platform running (`cd ../tpm-platform && make up`). Copy-paste in order.
 
 ```bash
-# A token. Any role works here - this service does not check roles, only signatures.
+# Registering equipment is a management action, so a manager token is needed.
 TOKEN=$(curl -s -X POST localhost:8080/token -H 'Content-Type: application/json' \
   -d '{"username":"kierownik","password":"kierownik"}' | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+
+OPERATOR=$(curl -s -X POST localhost:8080/token -H 'Content-Type: application/json' \
+  -d '{"username":"operator","password":"operator"}' | grep -o '"token":"[^"]*' | cut -d'"' -f4)
 
 # Health - open, no token
 curl -s localhost:8081/actuator/health
@@ -49,6 +52,11 @@ echo "$MACHINE"
 
 # Read it back -> 200, status RUNNING
 curl -s localhost:8081/machines/"$MACHINE" -H "Authorization: Bearer $TOKEN"
+
+# As an operator -> 403, refused by the aggregate rather than by the filter chain
+curl -s -i -X POST localhost:8081/machines \
+  -H "Authorization: Bearer $OPERATOR" -H 'Content-Type: application/json' \
+  -d '{"name":"Press A"}' | head -1
 
 # Unknown id -> 404
 curl -s -i localhost:8081/machines/no-such-machine -H "Authorization: Bearer $TOKEN" | head -1

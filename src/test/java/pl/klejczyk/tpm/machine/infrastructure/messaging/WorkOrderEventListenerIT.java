@@ -6,9 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import pl.klejczyk.tpm.machine.TestcontainersConfiguration;
+import pl.klejczyk.tpm.machine.domain.Actor;
 import pl.klejczyk.tpm.machine.domain.Machine;
 import pl.klejczyk.tpm.machine.domain.MachineRepository;
 import pl.klejczyk.tpm.machine.domain.MachineStatus;
+import pl.klejczyk.tpm.machine.domain.Role;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -30,7 +32,8 @@ class WorkOrderEventListenerIT {
     private MachineRepository machines;
 
     private String aRunningMachine() {
-        Machine machine = Machine.register(UUID.randomUUID().toString(), "Hydraulic press");
+        Machine machine = Machine.register(
+                new Actor("mgr-1", Role.MANAGER), UUID.randomUUID().toString(), "Hydraulic press");
         machines.save(machine);
         return machine.id();
     }

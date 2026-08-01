@@ -3,6 +3,7 @@ package pl.klejczyk.tpm.machine.application;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.klejczyk.tpm.machine.domain.Actor;
 import pl.klejczyk.tpm.machine.domain.Machine;
 import pl.klejczyk.tpm.machine.domain.MachineNotFound;
 import pl.klejczyk.tpm.machine.domain.MachineRepository;
@@ -23,8 +24,8 @@ public class MachineService {
     }
 
     @Transactional
-    public Machine register(String name) {
-        Machine machine = Machine.register(UUID.randomUUID().toString(), name);
+    public Machine register(Actor actor, String name) {
+        Machine machine = Machine.register(actor, UUID.randomUUID().toString(), name);
         Machine saved = repository.save(machine);
 
         events.publishEvent(new DomainEventOccurred(

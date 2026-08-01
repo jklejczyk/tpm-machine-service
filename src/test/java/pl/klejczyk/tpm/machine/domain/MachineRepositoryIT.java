@@ -19,7 +19,7 @@ class MachineRepositoryIT {
 
     @Test
     void persistsAndRestoresMachineState() {
-        Machine machine = Machine.register("m-1", "Hydraulic press");
+        Machine machine = Machine.register(new Actor("mgr-1", Role.MANAGER), "m-1", "Hydraulic press");
         machine.sendToMaintenance();
         repository.save(machine);
 
