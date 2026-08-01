@@ -17,12 +17,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-/**
- * Drives the listener through a real broker rather than by calling the method directly, so the
- * exchange declaration, the routing key binding and the JSON conversion are covered as well.
- * This is the core flow of the whole system: a repair started in another service moves a machine
- * here, with no call ever made between the two.
- */
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
 class WorkOrderEventListenerIT {
@@ -42,19 +36,11 @@ class WorkOrderEventListenerIT {
     }
 
     private void publish(String eventId, String type, String routingKey, String machineId) {
-        rabbitTemplate.convertAndSend(
-                RabbitConfiguration.EXCHANGE,
-                routingKey,
-                new EventEnvelope<>(eventId, "test-correlation", type, 1, Instant.now(),
-                        new WorkOrderMachineEvent(machineId)));
+        rabbitTemplate.convertAndSend(RabbitConfiguration.EXCHANGE, routingKey, new EventEnvelope<>(eventId, "test-correlation", type, 1, Instant.now(), new WorkOrderMachineEvent(machineId)));
     }
 
     private void awaitStatus(String machineId, MachineStatus expected) {
-        await().atMost(TIMEOUT).untilAsserted(() ->
-                assertThat(machines.findById(machineId))
-                        .get()
-                        .extracting(Machine::status)
-                        .isEqualTo(expected));
+        await().atMost(TIMEOUT).untilAsserted(() -> assertThat(machines.findById(machineId)).get().extracting(Machine::status).isEqualTo(expected));
     }
 
     @Test
@@ -77,10 +63,6 @@ class WorkOrderEventListenerIT {
         awaitStatus(machineId, MachineStatus.RUNNING);
     }
 
-    /**
-     * At-least-once delivery means the same event will arrive twice sooner or later. Replaying
-     * it must not take effect a second time, even though the state has moved on since.
-     */
     @Test
     void ignoresAnEventItHasAlreadyProcessed() {
         String machineId = aRunningMachine();
@@ -95,11 +77,6 @@ class WorkOrderEventListenerIT {
 
         publish(eventId, "WorkOrderStarted", "workorder.started", machineId);
 
-        // Nothing to await here: the assertion is that nothing happens.
-        await().during(Duration.ofSeconds(3)).atMost(TIMEOUT).untilAsserted(() ->
-                assertThat(machines.findById(machineId))
-                        .get()
-                        .extracting(Machine::status)
-                        .isEqualTo(MachineStatus.RUNNING));
+        await().during(Duration.ofSeconds(3)).atMost(TIMEOUT).untilAsserted(() -> assertThat(machines.findById(machineId)).get().extracting(Machine::status).isEqualTo(MachineStatus.RUNNING));
     }
 }
