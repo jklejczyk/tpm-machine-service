@@ -3,7 +3,7 @@
 Machine registry for the TPM system. Owns machine identity and machine status.
 
 Part of a set of four repositories — **start with
-[tpm-platform](../tpm-platform/README.md)**, which explains the architecture and runs
+[tpm-platform](https://github.com/jklejczyk/tpm-platform)**, which explains the architecture and runs
 everything together.
 
 ## What it does
@@ -68,7 +68,7 @@ curl -s -i -X POST localhost:8081/machines \
 
 # The machine reacts to events from the other service. Start a repair there
 # and read this machine again - its status will have changed to UNDER_MAINTENANCE
-# without anyone calling an endpoint here. See ../tpm-workorder-service/README.md
+# without anyone calling an endpoint here. See https://github.com/jklejczyk/tpm-workorder-service
 ```
 
 ## Running it on its own
